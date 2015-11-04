@@ -11,41 +11,42 @@ library(dplyr)
 #  Find minor errors.
 
 #  Read in raw whale observations (all observations through summer 2015).
-data <- read.csv("C:/Users/sara.williams/Documents/GitHub/Data-Cleaning/Input_data/Whales_0615.csv")
+dat <- read.csv("C:/Users/sara.williams/Documents/GitHub/General-Data-Cleaning/Input_data/Whales_0615_updated.csv")
 ###  7642 rows
 
-#  Remove data from 2007 (when protocol was not well in place).
-data2 <- filter(data, year > 2007)
-###  6957 rows
+# # #  Remove data from 2006 & 2007 (for consistent protocol).
+# # dat2 <- filter(dat, year > 2007)
+# # ###  6957 rows
 
-#   Remove points where whale distance to shore is less than 0 (i.e., on land).
-data3 <- filter(data2, whale_dist_shore_m > 0)
-# weird_shore <- filter(data2, whale_dist_shore_m <= 0)
-###  6713 rows
+# # #   Remove points where whale distance to shore is less than 0 (i.e., on land).
+# # dat3 <- filter(dat2, whale_dist_shore_m > 0)
+# # # weird_shore <- filter(data2, whale_dist_shore_m <= 0)
+# # ###  6713 rows
 
-#   Fix row where "count" is errorneously entered as 0. Changed this value to 1. 
-data3$count[data3$count == 0] <- 1
-###  6713 rows
+# # #   Fix row where "count" is errorneously entered as 0. Changed this value to 1. 
+# # dat3$count[dat3$count == 0] <- 1
+# # ###  6713 rows
 
 #   Look for errors where group has more than 1 CPA.
-# check_CPA <- data %>%
-							# # # group_by(same_whale_ID) %>%
-							# # # summarise(sum(CPA == "Y")) %>%
-							# # # as.data.frame(.)
+check_CPA <- dat %>%
+							group_by(same_whale_ID) %>%
+							summarise(sum(CPA == "Y")) %>%
+							as.data.frame(.)
+colnames(check_CPA) <- c("id", "NumCPA")
 
-# colnames(check_CPA) <- c("id", "NumCPA")
+###  4673 rows == 4673 unique same_whale_ID/"bursts" of the same whale/group	
 
-###  4561 rows == 4561 unique same_whale_ID/"bursts" of the same whale/group	
-
-# t <- check_CPA[ which(check_CPA$NumCPA > 1),] 	
-# t
+t <- check_CPA[ which(check_CPA$NumCPA > 1),] 	
+t
 
 		###  This shows errors at: 
 		###  2010-07-25-K-007 
 		###  2015-07-06-K-004
 		###  2015-07-27-K-029
+		###  2015-06-28-K-052
+		
 		# error_CPA <- data %>%
-								   # filter(same_whale_ID == "2010-07-25-K-007" | same_whale_ID == "2015-07-06-K-004" |same_whale_ID == "2015-07-27-K-029" ) %>%
+								   # filter(same_whale_ID == "2010-07-25-K-007" | same_whale_ID == "2015-07-06-K-004" |same_whale_ID == "2015-07-27-K-029" |same_whale_ID == "2015-06-28-K-052") %>%
 								   # as.data.frame(.)
 								   
 		###  cruise_event_ID  	unique_event_ID    same_whale_ID 		CPA 	X_whale_UTM 	Y_whale_UTM 	ob_type 		ob_order_CPA 		ob_order_time		observer 
@@ -63,22 +64,22 @@ data3$count[data3$count == 0] <- 1
 
 		### Will correct based on distance to ship and observation time.
  
-data3$ob_order_CPA[data3$unique_event_ID == "2010-07-25-K-009"] <- 3
-data3$ob_order_CPA[data3$unique_event_ID == "2010-07-25-K-008"] <- 2
-data3$CPA[data3$unique_event_ID == "2010-07-25-K-008"] <- "N"
+dat3$ob_order_CPA[dat3$unique_event_ID == "2010-07-25-K-009"] <- 3
+dat3$ob_order_CPA[dat3$unique_event_ID == "2010-07-25-K-008"] <- 2
+dat3$CPA[dat3$unique_event_ID == "2010-07-25-K-008"] <- "N"
 
-data3$CPA[data3$unique_event_ID == "2015-07-27-K-310"] <- "N"
+dat3$CPA[dat3$unique_event_ID == "2015-07-27-K-310"] <- "N"
 
-data3$ob_order_CPA[data3$unique_event_ID == "2015-07-06-K-004"] <- 3
-data3$ob_order_CPA[data3$unique_event_ID == "2015-07-06-K-100"] <- 2
-data3$CPA[data3$unique_event_ID == "2015-07-06-K-100"] <- "N"
-data3$ob_order_time[data3$unique_event_ID == "2015-07-06-K-005"] <- 3
+dat3$ob_order_CPA[dat3$unique_event_ID == "2015-07-06-K-004"] <- 3
+dat3$ob_order_CPA[dat3$unique_event_ID == "2015-07-06-K-100"] <- 2
+dat3$CPA[dat3$unique_event_ID == "2015-07-06-K-100"] <- "N"
+dat3$ob_order_time[dat3$unique_event_ID == "2015-07-06-K-005"] <- 3
 ###  6713 rows
 
-data3 <- data3 %>%
+dat3 <- dat3 %>%
 				 arrange(same_whale_ID, ob_order_time) %>%
 				 as.data.frame(.)
-write.csv(data3, "Whales_0615_general_clean.csv")
+write.csv(dat3, "Whales_0615_general_clean.csv")
 ################################################################################
 #  Check for erroneously connected unique_event_ID and same_whale_ID.
 
@@ -96,13 +97,13 @@ write.csv(data3, "Whales_0615_general_clean.csv")
 		###  2008-05-11-N 				2008-05-11-N-020 	2008-05-11-N-019     2
 		###  2008-05-11-N 				2008-05-11-N-023 	2008-05-11-N-019     2
 
-evb <- as.character(data3$unique_event_ID)
-swb <-as.character(data3$same_whale_ID)
+evb <- as.character(dat$unique_event_ID)
+swb <-as.character(dat$same_whale_ID)
 
 #  Determine where errors might be...
 #   If the ID  in column unique_event_ID occurs under column same_whale_ID in THE SAME row, it's okay.
 #   If the ID  in column unique_event_ID occurs under column same_whale_ID in A DIFFERENT row, 
-#   it's likely an error.		 
+#   it's an error.		 
 
 #  Find matches of evb in swb
 find <- evb %in% swb
@@ -121,34 +122,41 @@ errors <- sapply(find_t, function(i){
 
 as.data.frame(unlist(errors))
 
-		### "2008-05-11-N-019"
-		### "2008-05-11-N-021" 
-		### "2008-07-13-K-101" 
-		### "2008-07-19-N-022" 
-		### "2009-05-27-K-079" 
-		### "2009-07-01-K-091" 
-		### "2009-09-28-K-081" 
-		### "2010-06-13-N-011" 
-		### "2010-06-27-N-049" 
-		### "2010-09-20-N-014" 
-		### "2011-07-08-N-013" 
-		### "2011-07-10-N-004"
-		### "2011-07-16-N-007" 
-		### "2011-08-24-N-031" 
-		### "2012-07-22-N-013" 
-		### "2013-06-11-N-026" 
-		### "2013-06-29-N-007" 
-		### "2013-07-15-N-041" 
-		### "2013-08-15-N-007" 
-		### "2013-09-16-N-019" 
-		### "2013-09-16-N-027"
-		### "2015-06-26-K-021" 
-		### "2015-07-28-K-034" 
-		### "2015-07-22-K-043"
+# # # 2007-08-08-N-008
+# # # 2007-08-15-K-039
+# # # 2007-08-29-K-033
+# # # 2008-05-11-N-019
+# # # 2008-05-11-N-021
+# # # 2008-07-13-K-101
+# # # 2008-07-19-N-022
+# # # 2009-05-27-K-079
+# # # 2009-07-01-K-091
+# # # 2009-09-28-K-081
+# # # 2010-06-13-N-011
+# # # 2010-06-27-N-049
+# # # 2010-09-20-N-014
+# # # 2011-07-08-N-013
+# # # 2011-07-10-N-004
+# # # 2011-07-16-N-007
+# # # 2011-08-24-N-031
+# # # 2012-07-22-N-013
+# # # 2013-06-11-N-026
+# # # 2013-06-29-N-007
+# # # 2013-07-15-N-041
+# # # 2013-08-15-N-007
+# # # 2013-09-16-N-019
+# # # 2013-09-16-N-027
+# # # 2015-06-26-K-021
+# # # 2015-06-28-K-005
+# # # 2015-06-28-K-051
+# # # 2015-07-22-K-043
+# # # 2015-07-28-K-034
+# # # 2015-07-28-K-052
+
 
 #  Using this error list, adjust to the data set to correct these same_whale_ID's so that they match the correct ID. 
 #   This must be done manually in the excel data sheet because
-data4 <- data3 %>%
+dat4 <- dat3 %>%
 				 filter(same_whale_ID != "2008-05-11-N-019") %>%
 				 filter(same_whale_ID != "2008-05-11-N-021") %>%
 				 filter(same_whale_ID != "2008-07-13-K-101") %>%
@@ -177,8 +185,8 @@ data4 <- data3 %>%
 ###  6676 rows
 				 
 #  Check for errors with cleaned data set.
-evb <- as.character(data4$unique_event_ID)
-swb <-as.character(data4$same_whale_ID)
+evb <- as.character(dat4$unique_event_ID)
+swb <-as.character(dat4$same_whale_ID)
 
 #  Determine where errors might be...
 #   If the ID  in column EvB_Wpt_Id occurs under column SwB_Wpt_ID in THE SAME row, it's okay.
